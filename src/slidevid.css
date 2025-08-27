@@ -1,0 +1,34 @@
+.slidevid-wrapper {
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.slidevid-track {
+    display: flex;
+}
+
+.slidevid-slide {
+    flex: 0 0 calc(100% / 3);
+}
+
+.slidevid-prev,
+.slidevid-next {
+    top: 50%;
+    transform: translateY(-50%);
+    position: absolute;
+    border: none;
+    outline: none;
+    padding: 6px 10px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.3);
+    color: #fff;
+}
+
+.slidevid-prev {
+    left: 10px;
+}
+
+.slidevid-next {
+    right: 10px;
+}

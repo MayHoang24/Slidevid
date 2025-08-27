@@ -7,6 +7,7 @@ function Slidevid(selector, options = {}) {
 
     this.opt = Object.assign({}, options);
     this.slides = Array.from(this.container.children);
+    this.currentIndex = 0;
 
     this._init();
 }
@@ -45,5 +46,12 @@ Slidevid.prototype._createNavigation = function () {
 };
 
 Slidevid.prototype.moveSlide = function (step) {
-    console.log(step);
+    this.currentIndex = Math.min(
+        Math.max(this.currentIndex + step, 0),
+        this.slides.length - 3
+    );
+    this.offset = -(this.currentIndex * (100 / 3));
+    console.log(this.offset);
+
+    this.track.style.transform = `translateX(${this.offset}%)`;
 };

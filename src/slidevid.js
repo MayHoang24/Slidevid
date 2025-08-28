@@ -5,7 +5,13 @@ function Slidevid(selector, options = {}) {
         return;
     }
 
-    this.opt = Object.assign({}, options);
+    this.opt = Object.assign(
+        {
+            items: 1,
+            loop: false,
+        },
+        options
+    );
     this.slides = Array.from(this.container.children);
     this.currentIndex = 0;
 
@@ -24,6 +30,7 @@ Slidevid.prototype._createTrack = function () {
     this.track.className = "slidevid-track";
     this.slides.forEach((slide) => {
         slide.className = "slidevid-slide";
+        slide.style.flexBasis = `calc(100% / ${this.opt.items})`;
         this.track.appendChild(slide);
     });
 
@@ -46,12 +53,18 @@ Slidevid.prototype._createNavigation = function () {
 };
 
 Slidevid.prototype.moveSlide = function (step) {
-    this.currentIndex = Math.min(
-        Math.max(this.currentIndex + step, 0),
-        this.slides.length - 3
-    );
-    this.offset = -(this.currentIndex * (100 / 3));
-    console.log(this.offset);
+    if (this.opt.loop) {
+        this.currentIndex =
+            (this.currentIndex + step + this.slides.length) %
+            this.slides.length;
+    } else {
+        this.currentIndex = Math.min(
+            Math.max(this.currentIndex + step, 0),
+            this.slides.length - this.opt.items
+        );
+    }
+
+    this.offset = -(this.currentIndex * (100 / this.opt.items));
 
     this.track.style.transform = `translateX(${this.offset}%)`;
 };

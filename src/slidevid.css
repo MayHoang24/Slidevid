@@ -6,7 +6,6 @@
 
 .slidevid-track {
     display: flex;
-    transition: transform ease 0.3s;
 }
 
 .slidevid-slide {

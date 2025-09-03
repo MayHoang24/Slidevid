@@ -13,9 +13,10 @@ function Slidevid(selector, options = {}) {
         options
     );
     this.slides = Array.from(this.container.children);
-    this.currentIndex = 0;
+    this.currentIndex = this.opt.loop ? this.opt.items : 0;
 
     this._init();
+    this._updatePosition();
 }
 
 Slidevid.prototype._init = function () {
@@ -27,9 +28,19 @@ Slidevid.prototype._init = function () {
 
 Slidevid.prototype._createTrack = function () {
     this.track = document.createElement("div");
-    this.track.className = "slidevid-track";
+    this.track.classList.add("slidevid-track");
+
+    const cloneHead = this.slides
+        .slice(-this.opt.items)
+        .map((node) => node.cloneNode(true));
+    const cloneTail = this.slides
+        .slice(0, this.opt.items)
+        .map((node) => node.cloneNode(true));
+
+    this.slides = cloneHead.concat(this.slides.concat(cloneTail));
+
     this.slides.forEach((slide) => {
-        slide.className = "slidevid-slide";
+        slide.classList.add("slidevid-slide");
         slide.style.flexBasis = `calc(100% / ${this.opt.items})`;
         this.track.appendChild(slide);
     });
@@ -39,11 +50,11 @@ Slidevid.prototype._createTrack = function () {
 
 Slidevid.prototype._createNavigation = function () {
     this.prevBtn = document.createElement("button");
-    this.prevBtn.className = "slidevid-prev";
+    this.prevBtn.classList.add("slidevid-prev");
     this.prevBtn.textContent = "Prev";
 
     this.nextBtn = document.createElement("button");
-    this.nextBtn.className = "slidevid-next";
+    this.nextBtn.classList.add("slidevid-next");
     this.nextBtn.textContent = "Next";
 
     this.container.append(this.prevBtn, this.nextBtn);
@@ -53,10 +64,24 @@ Slidevid.prototype._createNavigation = function () {
 };
 
 Slidevid.prototype.moveSlide = function (step) {
+    if (this._isAnimating) return;
+    this._isAnimating = true;
+
     if (this.opt.loop) {
         this.currentIndex =
             (this.currentIndex + step + this.slides.length) %
             this.slides.length;
+
+        this.track.ontransitionend = () => {
+            const maxIndex = this.slides.length - this.opt.items;
+            if (this.currentIndex <= 0) {
+                this.currentIndex = maxIndex - this.opt.items;
+            } else if (this.currentIndex >= maxIndex) {
+                this.currentIndex = this.opt.items;
+            }
+            this._updatePosition(true);
+            this._isAnimating = false;
+        };
     } else {
         this.currentIndex = Math.min(
             Math.max(this.currentIndex + step, 0),
@@ -64,7 +89,11 @@ Slidevid.prototype.moveSlide = function (step) {
         );
     }
 
-    this.offset = -(this.currentIndex * (100 / this.opt.items));
+    this._updatePosition();
+};
 
+Slidevid.prototype._updatePosition = function (instant = false) {
+    this.track.style.transition = instant ? "none" : "transform ease 0.3s";
+    this.offset = -(this.currentIndex * (100 / this.opt.items));
     this.track.style.transform = `translateX(${this.offset}%)`;
 };

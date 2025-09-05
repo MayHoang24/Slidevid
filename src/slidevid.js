@@ -8,7 +8,9 @@ function Slidevid(selector, options = {}) {
     this.opt = Object.assign(
         {
             items: 1,
+            speed: 300,
             loop: false,
+            nav: true,
         },
         options
     );
@@ -22,22 +24,35 @@ function Slidevid(selector, options = {}) {
 Slidevid.prototype._init = function () {
     this.container.classList.add("slidevid-wrapper");
 
+    this._createContent();
     this._createTrack();
-    this._createNavigation();
+    this._createControls();
+
+    if (this.opt.nav) {
+        this._createNav();
+    }
+};
+
+Slidevid.prototype._createContent = function () {
+    this.content = document.createElement("div");
+    this.content.classList.add("slidevid-content");
+    this.container.appendChild(this.content);
 };
 
 Slidevid.prototype._createTrack = function () {
     this.track = document.createElement("div");
     this.track.classList.add("slidevid-track");
 
-    const cloneHead = this.slides
-        .slice(-this.opt.items)
-        .map((node) => node.cloneNode(true));
-    const cloneTail = this.slides
-        .slice(0, this.opt.items)
-        .map((node) => node.cloneNode(true));
+    if (this.opt.loop) {
+        const cloneHead = this.slides
+            .slice(-this.opt.items)
+            .map((node) => node.cloneNode(true));
+        const cloneTail = this.slides
+            .slice(0, this.opt.items)
+            .map((node) => node.cloneNode(true));
 
-    this.slides = cloneHead.concat(this.slides.concat(cloneTail));
+        this.slides = cloneHead.concat(this.slides.concat(cloneTail));
+    }
 
     this.slides.forEach((slide) => {
         slide.classList.add("slidevid-slide");
@@ -45,10 +60,10 @@ Slidevid.prototype._createTrack = function () {
         this.track.appendChild(slide);
     });
 
-    this.container.appendChild(this.track);
+    this.content.appendChild(this.track);
 };
 
-Slidevid.prototype._createNavigation = function () {
+Slidevid.prototype._createControls = function () {
     this.prevBtn = document.createElement("button");
     this.prevBtn.classList.add("slidevid-prev");
     this.prevBtn.textContent = "Prev";
@@ -57,43 +72,90 @@ Slidevid.prototype._createNavigation = function () {
     this.nextBtn.classList.add("slidevid-next");
     this.nextBtn.textContent = "Next";
 
-    this.container.append(this.prevBtn, this.nextBtn);
+    this.content.append(this.prevBtn, this.nextBtn);
 
     this.prevBtn.onclick = () => this.moveSlide(-1);
     this.nextBtn.onclick = () => this.moveSlide(1);
+};
+
+Slidevid.prototype._createNav = function () {
+    this.navWrapper = document.createElement("div");
+    this.navWrapper.classList.add("slidevid-nav");
+
+    const slideCount =
+        this.slides.length - (this.opt.loop ? this.opt.items * 2 : 0);
+    const pageCount = Math.ceil(slideCount / this.opt.items);
+
+    for (let i = 0; i < pageCount; i++) {
+        const dot = document.createElement("button");
+        dot.classList.add("slidevid-dot");
+
+        if (i === 0) dot.classList.add("active");
+
+        dot.onclick = () => {
+            this.currentIndex = this.opt.loop
+                ? i * this.opt.items + this.opt.items
+                : this.opt.items;
+            this._updatePosition();
+        };
+
+        this.navWrapper.appendChild(dot);
+    }
+
+    this.container.appendChild(this.navWrapper);
 };
 
 Slidevid.prototype.moveSlide = function (step) {
     if (this._isAnimating) return;
     this._isAnimating = true;
 
-    if (this.opt.loop) {
-        this.currentIndex =
-            (this.currentIndex + step + this.slides.length) %
-            this.slides.length;
+    const maxIndex = this.slides.length - this.opt.items;
 
-        this.track.ontransitionend = () => {
-            const maxIndex = this.slides.length - this.opt.items;
+    this.currentIndex = Math.min(
+        Math.max(this.currentIndex + step, 0),
+        maxIndex
+    );
+
+    setTimeout(() => {
+        if (this.opt.loop) {
             if (this.currentIndex <= 0) {
                 this.currentIndex = maxIndex - this.opt.items;
+                this._updatePosition(true);
             } else if (this.currentIndex >= maxIndex) {
                 this.currentIndex = this.opt.items;
+                this._updatePosition(true);
             }
-            this._updatePosition(true);
-            this._isAnimating = false;
-        };
-    } else {
-        this.currentIndex = Math.min(
-            Math.max(this.currentIndex + step, 0),
-            this.slides.length - this.opt.items
-        );
-    }
-
+        }
+        this._isAnimating = false;
+    }, this.opt.speed);
     this._updatePosition();
 };
 
+Slidevid.prototype._updateNav = function () {
+    let realIndex = this.currentIndex;
+
+    if (this.opt.loop) {
+        const slideCount = this.slides.length - this.opt.items * 2;
+        realIndex =
+            (this.currentIndex - this.opt.items + slideCount) % slideCount;
+    }
+
+    const pageIndex = Math.floor(realIndex / this.opt.items);
+    const dots = Array.from(this.navWrapper.children);
+
+    dots.forEach((dot, index) => {
+        dot.classList.toggle("active", index === pageIndex);
+    });
+};
+
 Slidevid.prototype._updatePosition = function (instant = false) {
-    this.track.style.transition = instant ? "none" : "transform ease 0.3s";
+    this.track.style.transition = instant
+        ? "none"
+        : `transform ease ${this.opt.speed}ms`;
     this.offset = -(this.currentIndex * (100 / this.opt.items));
     this.track.style.transform = `translateX(${this.offset}%)`;
+
+    if (this.opt.nav && !instant) {
+        this._updateNav();
+    }
 };

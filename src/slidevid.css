@@ -1,7 +1,10 @@
 .slidevid-wrapper {
     width: 100%;
-    position: relative;
     overflow: hidden;
+}
+
+.slidevid-content {
+    position: relative;
 }
 
 .slidevid-track {
@@ -31,4 +34,24 @@
 
 .slidevid-next {
     right: 10px;
+}
+
+.slidevid-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.slidevid-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: none;
+    background: #ccc;
+}
+
+.slidevid-dot.active {
+    background: #333;
 }

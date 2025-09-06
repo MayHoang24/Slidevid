@@ -16,6 +16,9 @@ function Slidevid(selector, options = {}) {
             prevButton: null,
             nextButton: null,
             slideBy: 1,
+            autoplay: false,
+            autoplayTimeout: 3000,
+            autoplayHoverPause: true,
         },
         options
     );
@@ -42,6 +45,30 @@ Slidevid.prototype._init = function () {
     if (this.opt.nav && showNav) {
         this._createNav();
     }
+
+    if (this.opt.autoplay) {
+        this._startAutoplay();
+
+        if (this.opt.autoplayHoverPause) {
+            this.container.onmouseenter = () => this._stopAutoplay();
+            this.container.onmouseleave = () => this._startAutoplay();
+        }
+    }
+};
+
+Slidevid.prototype._startAutoplay = function () {
+    if (this.autoplayTimer) return;
+
+    const slideBy = this._getSlideBy();
+
+    this.autoplayTimer = setInterval(() => {
+        this.moveSlide(slideBy);
+    }, this.opt.autoplayTimeout);
+};
+
+Slidevid.prototype._stopAutoplay = function () {
+    clearInterval(this.autoplayTimer);
+    this.autoplayTimer = null;
 };
 
 Slidevid.prototype._createContent = function () {
@@ -112,10 +139,10 @@ Slidevid.prototype._createControls = function () {
         this.content.appendChild(this.nextBtn);
     }
 
-    const stepSize = this._getSlideBy();
+    const slideBy = this._getSlideBy();
 
-    this.prevBtn.onclick = () => this.moveSlide(-stepSize);
-    this.nextBtn.onclick = () => this.moveSlide(stepSize);
+    this.prevBtn.onclick = () => this.moveSlide(-slideBy);
+    this.nextBtn.onclick = () => this.moveSlide(slideBy);
 };
 
 Slidevid.prototype._getSlideCount = function () {
@@ -138,7 +165,7 @@ Slidevid.prototype._createNav = function () {
         dot.onclick = () => {
             this.currentIndex = this.opt.loop
                 ? i * this.opt.items + this._getCloneCount()
-                : this.opt.items;
+                : i * this.opt.items;
             this._updatePosition();
         };
 
@@ -182,7 +209,7 @@ Slidevid.prototype._updateNav = function () {
     let realIndex = this.currentIndex;
 
     if (this.opt.loop) {
-        const slideCount = this._getCloneCount();
+        const slideCount = this._getSlideCount();
         realIndex =
             (this.currentIndex - this._getCloneCount() + slideCount) %
             slideCount;
@@ -207,3 +234,5 @@ Slidevid.prototype._updatePosition = function (instant = false) {
         this._updateNav();
     }
 };
+
+// NHỚ HOÀN THIỆN BẢN ĐEMO CHO THƯ VIỆN
